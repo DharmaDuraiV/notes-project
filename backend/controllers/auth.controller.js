@@ -11,17 +11,17 @@ const signToken = (id) => {
   });
 };
 
-const createSingToken = (statusCode, user, res) => {
+const createSignToken = (statusCode, user, res) => {
   const token = signToken(user._id);
 
   user.password = undefined;
   const cookieOptions = {
     expiresIn: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE_TIME * 24 * 60 * 60 * 1000,
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRE_TIME) * 1000,
     ),
     httpOnly: true,
   };
-  if (process.env.NODE_ENv === "production") cookieOptions.secure = true;
+  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
 
   res.cookie("JWT", token, cookieOptions);
 
@@ -34,9 +34,7 @@ exports.register = catchAsync(async (req, res, next) => {
   const { username, email, password, confirmPassword, role } = req.body;
 
   const user = await User.findOne({ email });
-  if (user) {
-    return next(new AppError(409, "user is already exists"));
-  }
+
   const newuser = await User.create({
     username,
     email,
@@ -45,7 +43,7 @@ exports.register = catchAsync(async (req, res, next) => {
     role,
   });
 
-  createSingToken(201, newuser, res);
+  createSignToken(201, newuser, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -61,7 +59,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError(401, "email or password is worng"));
   }
 
-  createSingToken(200, user, res);
+  createSignToken(200, user, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {

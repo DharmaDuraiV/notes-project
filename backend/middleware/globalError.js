@@ -1,8 +1,21 @@
 const AppError = require("../utils/appError");
 
+const hanldeJwtTokenExpiredError = () => {
+  return new AppError(401, "Invalid authentication token . please log in again.");
+};
+
+const handleDuplicateErrorDB = (err) => {
+  const field = Object.keys(err.keyValue)[0];
+  const value = err.keyValue[field];
+
+  return new AppError(
+    409,
+    `${field} :'${value}' already exists. Please use another ${field}.`,
+  );
+};
+
 const handleCastErrorDB = (err) => {
   const message = `Invalid path : ${err.path} and value : ${err.value} `;
-
   return new AppError(400, message);
 };
 
@@ -46,9 +59,10 @@ const globalError = (err, req, res, next) => {
     let error = Object.create(err);
 
     if (error.name === "CastError") error = handleCastErrorDB(error);
-
     if (error.name === "ValidationError") error = handleValidatorErrorDB(error);
-
+    if (error.code === 11000) error = handleDuplicateErrorDB(error);
+    if (error.name === "TokenExpiredError")
+      error = hanldeJwtTokenExpiredError();
     sendProdError(error, res);
   }
 };
