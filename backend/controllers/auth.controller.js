@@ -17,7 +17,7 @@ const createSignToken = (statusCode, user, res) => {
   user.password = undefined;
   const cookieOptions = {
     expiresIn: new Date(
-      Date.now() + Number(process.env.JWT_COOKIE_EXPIRE_TIME) * 1000,
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRE_TIME) * 24 * 60 * 1000,
     ),
     httpOnly: true,
   };
@@ -108,3 +108,32 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+
+exports.forgotPasswordMe = catchAsync(async (req, res, next) => {
+  const { currentpassword, newpassword, confirmPassword } = req.body;
+
+  if (!currentpassword || !newpassword || !confirmPassword) {
+    return next(
+      new AppError(
+        400,
+        "Current password, new password, and confirm password are required.",
+      ),
+    );
+  }
+
+  const user = await User.findById(req.user._id).select("+password");
+
+  if (!(await user.checkPassword(currentpassword))) {
+    return next(new AppError(401, "Invalid password , please try again"));
+  }
+  user.password = newpassword;
+  user.confirmPassword = confirmPassword;
+
+  await user.save();
+  user.password = undefined;
+
+  res.status(200).json({
+    status: "success",
+    message: "user password is updated successfully",
+  });
+});

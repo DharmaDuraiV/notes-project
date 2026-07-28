@@ -1,7 +1,15 @@
 const AppError = require("../utils/appError");
 
+const handleJsonWebTokenError = () => {
+  return new AppError(401, "Invalid token. Please log in again.");
+};
+
+
 const hanldeJwtTokenExpiredError = () => {
-  return new AppError(401, "Invalid authentication token . please log in again.");
+  return new AppError(
+    401,
+    "Invalid authentication token . please log in again.",
+  );
 };
 
 const handleDuplicateErrorDB = (err) => {
@@ -63,6 +71,7 @@ const globalError = (err, req, res, next) => {
     if (error.code === 11000) error = handleDuplicateErrorDB(error);
     if (error.name === "TokenExpiredError")
       error = hanldeJwtTokenExpiredError();
+    if (error.name === "JsonWebTokenError") error = handleJsonWebTokenError();
     sendProdError(error, res);
   }
 };
