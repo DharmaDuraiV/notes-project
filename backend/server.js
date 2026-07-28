@@ -8,7 +8,7 @@ const connectDB = require("./config/db");
 
 const port = process.env.PORT || 5000;
 
-console.log(process.env.NODE_ENV);
+// console.log(process.env.NODE_ENV);
 
 connectDB();
 app.listen(port, (err) => {
